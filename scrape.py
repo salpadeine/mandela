@@ -187,7 +187,7 @@ def render(payload: dict) -> str:
     <div class="summary" id="summary"></div>
     <div id="compare"></div>
   </div>
-  <footer>Страница сама Yahoo не дёргает: браузеру это запрещено. Цифры подтягивает скрипт по расписанию или по кнопке Run workflow. CAT — категории против соперника этой недели, не против команды, выбранной снизу.</footer>
+  <footer>Цифры с матчапов лиги, обновляются каждый день. CAT — сколько категорий команда выиграла у соперника этой недели, а не у команды, выбранной внизу.</footer>
 </main>
 <script>
 const CATS = {json.dumps(CATS)};
@@ -208,11 +208,14 @@ function better(cat, a, b) {{
 function shade(cat, value, values) {{
   const nums = values.filter(v => v !== null && v !== undefined);
   if (value === null || nums.length < 2) return "";
-  const sorted = [...nums].sort((a,b) => a-b);
-  let rank = sorted.indexOf(value) / (sorted.length - 1);
-  if (!LOWER.has(cat)) rank = 1 - rank;
-  const light = Math.round(232 - rank * 150);
-  return `background:rgb(${{light}},${{Math.round(236-rank*40)}},${{Math.round(226-rank*150)}})`;
+  const min = Math.min(...nums), max = Math.max(...nums);
+  if (max === min) return "";
+  let rank = (value - min) / (max - min);
+  if (LOWER.has(cat)) rank = 1 - rank;
+  const r = Math.round(244 - rank * 213);
+  const g = Math.round(248 - rank * 126);
+  const b = Math.round(244 - rank * 175);
+  return `background:rgb(${{r}},${{g}},${{b}})`;
 }}
 function teamByName(name) {{ return WEEKS[week].teams.find(t => t.name === name); }}
 function render() {{
