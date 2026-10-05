@@ -187,7 +187,7 @@ def render(payload: dict) -> str:
     <div class="summary" id="summary"></div>
     <div id="compare"></div>
   </div>
-  <footer>Цифры с матчапов лиги, обновляются каждый день. CAT — сколько категорий команда выиграла у соперника этой недели, а не у команды, выбранной внизу.</footer>
+  <footer>Цифры с матчапов лиги, обновляются каждый день. «Лучших» — в скольких категориях команда первая среди всех 14. При равенстве лучшими считаются обе.</footer>
 </main>
 <script>
 const CATS = {json.dumps(CATS)};
@@ -218,6 +218,17 @@ function shade(cat, value, values) {{
   const color = rank > 0.55 ? "#f4faf6" : "#1c2421";
   return `background:rgb(${{r}},${{g}},${{b}});color:${{color}}`;
 }}
+function leads(teams) {{
+  const out = {{}};
+  teams.forEach(t => out[t.name] = 0);
+  CATS.forEach(c => {{
+    const vals = teams.map(t => t.stats[c]).filter(v => v !== null && v !== undefined);
+    if (!vals.length) return;
+    const best = LOWER.has(c) ? Math.min(...vals) : Math.max(...vals);
+    teams.forEach(t => {{ if (t.stats[c] === best) out[t.name]++; }});
+  }});
+  return out;
+}}
 function teamByName(name) {{ return view().teams.find(t => t.name === name); }}
 function view() {{
   if (week !== "season") return WEEKS[week];
@@ -225,7 +236,7 @@ function view() {{
   const teams = names.map(name => {{
     const stats = {{}};
     CATS.forEach(c => stats[c] = c === "GAA" ? null : 0);
-    let gaaSum = 0, gaaN = 0, cats = 0;
+    let gaaSum = 0, gaaN = 0;
     Object.values(WEEKS).forEach(w => {{
       const t = w.teams.find(x => x.name === name);
       if (!t || t.stats.G === null) return;
@@ -233,10 +244,9 @@ function view() {{
         if (c === "GAA") {{ if (t.stats.GAA !== null) {{ gaaSum += t.stats.GAA; gaaN++; }} }}
         else stats[c] += t.stats[c] || 0;
       }});
-      cats += t.cats || 0;
     }});
     stats.GAA = gaaN ? Math.round(gaaSum / gaaN * 100) / 100 : null;
-    return {{ name, stats, cats }};
+    return {{ name, stats }};
   }});
   return {{ teams, pairs: [] }};
 }}
@@ -252,16 +262,17 @@ function render() {{
     : empty
     ? "Неделя открыта, Yahoo ещё не насчитал статы."
     : "Итог или текущий срез матчапов. Клик по заголовку сортирует.";
+  const lead = leads(data.teams);
   const rows = [...data.teams].sort((a,b) => {{
-    const av = sortKey === "name" ? a.name : a.stats[sortKey] ?? a.cats;
-    const bv = sortKey === "name" ? b.name : b.stats[sortKey] ?? b.cats;
-    if (av === null) return 1; if (bv === null) return -1;
+    const av = sortKey === "name" ? a.name : sortKey === "leads" ? lead[a.name] : a.stats[sortKey];
+    const bv = sortKey === "name" ? b.name : sortKey === "leads" ? lead[b.name] : b.stats[sortKey];
+    if (av === null || av === undefined) return 1; if (bv === null || bv === undefined) return -1;
     return sortDir * (typeof av === "string" ? av.localeCompare(bv) : av - bv);
   }});
-  const head = `<tr><th data-k="name">Team</th>${{CATS.map(c=>`<th data-k="${{c}}">${{c}}</th>`).join("")}}<th data-k="cats">CAT</th></tr>`;
+  const head = `<tr><th data-k="name">Team</th>${{CATS.map(c=>`<th data-k="${{c}}">${{c}}</th>`).join("")}}<th data-k="leads">Лучших</th></tr>`;
   document.getElementById("grid").innerHTML = head + rows.map(r => `<tr><td>${{r.name}}</td>${{
     CATS.map(c => `<td style="${{shade(c, r.stats[c], data.teams.map(t => t.stats[c]))}}">${{fmt(r.stats[c])}}</td>`).join("")
-  }}<td>${{r.cats ?? "–"}}</td></tr>`).join("");
+  }}<td>${{empty ? "–" : lead[r.name]}}</td></tr>`).join("");
   document.querySelectorAll("#grid th").forEach(th => th.onclick = () => {{
     sortDir = sortKey === th.dataset.k ? -sortDir : (th.dataset.k === "name" ? 1 : -1);
     sortKey = th.dataset.k; render();
