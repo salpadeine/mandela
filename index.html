@@ -39,7 +39,7 @@
 <body>
 <header>
   <h1>Nelson Mandela Cup — категорийные итоги</h1>
-  <p>Лига Yahoo 2670. Обновлено 2026-10-05 17:34 МСК. Зеленее — лучше среди 14 команд, GAA наоборот.</p>
+  <p>Лига Yahoo 2670. Обновлено 2026-10-05 17:37 МСК. Зеленее — лучше среди 14 команд, GAA наоборот.</p>
 </header>
 <main>
   <div class="bar" id="weeks"></div>
@@ -54,7 +54,7 @@
     <div class="summary" id="summary"></div>
     <div id="compare"></div>
   </div>
-  <footer>Цифры с матчапов лиги, обновляются каждый день. «Лучших» — в скольких категориях команда первая среди всех 14. При равенстве лучшими считаются обе.</footer>
+  <footer>Цифры с матчапов лиги, обновляются каждый день. «Лучший» — в скольких категориях команда первая среди всех 14. При равенстве лучшими считаются обе.</footer>
 </main>
 <script>
 const CATS = ["G", "A", "P", "+/-", "PIM", "PPP", "SOG", "FW", "HIT", "BLK", "W", "GAA", "SV", "SHO"];
@@ -83,6 +83,17 @@ function shade(cat, value, values) {
   const g = Math.round(250 - rank * 126);
   const b = Math.round(244 - rank * 176);
   const color = rank > 0.55 ? "#f4faf6" : "#1c2421";
+  return `background:rgb(${r},${g},${b});color:${color}`;
+}
+function gold(value, values) {
+  const nums = values.filter(v => v !== null && v !== undefined);
+  if (!nums.length) return "";
+  const min = Math.min(...nums), max = Math.max(...nums);
+  const rank = max === min ? 0.5 : (value - min) / (max - min);
+  const r = Math.round(255 - rank * 78);
+  const g = Math.round(248 - rank * 126);
+  const b = Math.round(230 - rank * 206);
+  const color = rank > 0.55 ? "#fff8e8" : "#1c2421";
   return `background:rgb(${r},${g},${b});color:${color}`;
 }
 function leads(teams) {
@@ -136,10 +147,10 @@ function render() {
     if (av === null || av === undefined) return 1; if (bv === null || bv === undefined) return -1;
     return sortDir * (typeof av === "string" ? av.localeCompare(bv) : av - bv);
   });
-  const head = `<tr><th data-k="name">Team</th>${CATS.map(c=>`<th data-k="${c}">${c}</th>`).join("")}<th data-k="leads">Лучших</th></tr>`;
+  const head = `<tr><th data-k="name">Team</th>${CATS.map(c=>`<th data-k="${c}">${c}</th>`).join("")}<th data-k="leads">Лучший</th></tr>`;
   document.getElementById("grid").innerHTML = head + rows.map(r => `<tr><td>${r.name}</td>${
     CATS.map(c => `<td style="${shade(c, r.stats[c], data.teams.map(t => t.stats[c]))}">${fmt(r.stats[c])}</td>`).join("")
-  }<td>${empty ? "–" : lead[r.name]}</td></tr>`).join("");
+  }<td style="${empty ? "" : gold(lead[r.name], Object.values(lead))}">${empty ? "–" : lead[r.name]}</td></tr>`).join("");
   document.querySelectorAll("#grid th").forEach(th => th.onclick = () => {
     sortDir = sortKey === th.dataset.k ? -sortDir : (th.dataset.k === "name" ? 1 : -1);
     sortKey = th.dataset.k; render();
