@@ -11,7 +11,7 @@ import json
 import re
 import time
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 
@@ -209,22 +209,47 @@ function shade(cat, value, values) {{
   const nums = values.filter(v => v !== null && v !== undefined);
   if (value === null || nums.length < 2) return "";
   const min = Math.min(...nums), max = Math.max(...nums);
-  if (max === min) return "";
+  if (max === min) return "background:#f4faf6;color:#1c2421";
   let rank = (value - min) / (max - min);
   if (LOWER.has(cat)) rank = 1 - rank;
-  const r = Math.round(244 - rank * 213);
-  const g = Math.round(248 - rank * 126);
-  const b = Math.round(244 - rank * 175);
-  return `background:rgb(${{r}},${{g}},${{b}})`;
+  const r = Math.round(244 - rank * 212);
+  const g = Math.round(250 - rank * 126);
+  const b = Math.round(244 - rank * 176);
+  const color = rank > 0.55 ? "#f4faf6" : "#1c2421";
+  return `background:rgb(${{r}},${{g}},${{b}});color:${{color}}`;
 }}
-function teamByName(name) {{ return WEEKS[week].teams.find(t => t.name === name); }}
+function teamByName(name) {{ return view().teams.find(t => t.name === name); }}
+function view() {{
+  if (week !== "season") return WEEKS[week];
+  const names = [...new Set(Object.values(WEEKS).flatMap(w => w.teams.map(t => t.name)))].sort();
+  const teams = names.map(name => {{
+    const stats = {{}};
+    CATS.forEach(c => stats[c] = c === "GAA" ? null : 0);
+    let gaaSum = 0, gaaN = 0, cats = 0;
+    Object.values(WEEKS).forEach(w => {{
+      const t = w.teams.find(x => x.name === name);
+      if (!t || t.stats.G === null) return;
+      CATS.forEach(c => {{
+        if (c === "GAA") {{ if (t.stats.GAA !== null) {{ gaaSum += t.stats.GAA; gaaN++; }} }}
+        else stats[c] += t.stats[c] || 0;
+      }});
+      cats += t.cats || 0;
+    }});
+    stats.GAA = gaaN ? Math.round(gaaSum / gaaN * 100) / 100 : null;
+    return {{ name, stats, cats }};
+  }});
+  return {{ teams, pairs: [] }};
+}}
 function render() {{
-  const data = WEEKS[week];
-  document.getElementById("weeks").innerHTML = Object.keys(WEEKS).sort((a,b)=>a-b).map(w =>
+  const data = view();
+  document.getElementById("weeks").innerHTML = `<button data-w="season" class="${{week==="season"?"active":""}}">Сезон</button>` +
+    Object.keys(WEEKS).sort((a,b)=>a-b).map(w =>
     `<button data-w="${{w}}" class="${{w===week?"active":""}}">Неделя ${{w}}${{w==String(CURRENT)?" · сейчас":""}}</button>`).join("");
   document.querySelectorAll("#weeks button").forEach(b => b.onclick = () => {{ week = b.dataset.w; render(); renderCompare(); }});
   const empty = data.teams.every(t => t.stats.G === null);
-  document.getElementById("note").textContent = empty
+  document.getElementById("note").textContent = week === "season"
+    ? "Сумма всех сыгранных недель. GAA — среднее, не сумма. Пустые недели не считаются."
+    : empty
     ? "Неделя открыта, Yahoo ещё не насчитал статы."
     : "Итог или текущий срез матчапов. Клик по заголовку сортирует.";
   const rows = [...data.teams].sort((a,b) => {{
@@ -235,7 +260,7 @@ function render() {{
   }});
   const head = `<tr><th data-k="name">Team</th>${{CATS.map(c=>`<th data-k="${{c}}">${{c}}</th>`).join("")}}<th data-k="cats">CAT</th></tr>`;
   document.getElementById("grid").innerHTML = head + rows.map(r => `<tr><td>${{r.name}}</td>${{
-    CATS.map(c => `<td><span style="${{shade(c, r.stats[c], data.teams.map(t => t.stats[c]))}}">${{fmt(r.stats[c])}}</span></td>`).join("")
+    CATS.map(c => `<td style="${{shade(c, r.stats[c], data.teams.map(t => t.stats[c]))}}">${{fmt(r.stats[c])}}</td>`).join("")
   }}<td>${{r.cats ?? "–"}}</td></tr>`).join("");
   document.querySelectorAll("#grid th").forEach(th => th.onclick = () => {{
     sortDir = sortKey === th.dataset.k ? -sortDir : (th.dataset.k === "name" ? 1 : -1);
@@ -278,6 +303,7 @@ function renderCompare() {{
 document.getElementById("a").onchange = renderCompare;
 document.getElementById("b").onchange = renderCompare;
 document.getElementById("opp").onclick = () => {{
+  if (week === "season") return;
   const name = document.getElementById("a").value;
   const pair = (WEEKS[week].pairs || []).find(p => p.includes(name));
   if (pair) document.getElementById("b").value = pair[0] === name ? pair[1] : pair[0];
@@ -306,7 +332,7 @@ def main() -> None:
     payload = {
         "league": LEAGUE,
         "current_week": week_now,
-        "updated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        "updated": datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d %H:%M МСК"),
         "weeks": weeks,
     }
     (ROOT / "data.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2))
