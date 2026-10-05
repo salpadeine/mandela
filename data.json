@@ -1,0 +1,665 @@
+{
+  "league": "2670",
+  "current_week": 2,
+  "updated": "2026-10-05 13:36 UTC",
+  "weeks": {
+    "1": {
+      "week": 1,
+      "teams": [
+        {
+          "name": "Moscow Salps",
+          "stats": {
+            "G": 13,
+            "A": 19,
+            "P": 32,
+            "+/-": 0,
+            "PIM": 28,
+            "PPP": 12,
+            "SOG": 88,
+            "FW": 128,
+            "HIT": 75,
+            "BLK": 35,
+            "W": 5,
+            "GA*": 10,
+            "GAA": 1.97,
+            "SV": 120,
+            "SHO": 2
+          },
+          "cats": 5
+        },
+        {
+          "name": "Moscow Evil Shamans",
+          "stats": {
+            "G": 15,
+            "A": 20,
+            "P": 35,
+            "+/-": -4,
+            "PIM": 31,
+            "PPP": 12,
+            "SOG": 91,
+            "FW": 84,
+            "HIT": 68,
+            "BLK": 44,
+            "W": 5,
+            "GA*": 23,
+            "GAA": 2.84,
+            "SV": 185,
+            "SHO": 0
+          },
+          "cats": 7
+        },
+        {
+          "name": "Frankfurt Steelers",
+          "stats": {
+            "G": 7,
+            "A": 20,
+            "P": 27,
+            "+/-": 4,
+            "PIM": 33,
+            "PPP": 10,
+            "SOG": 102,
+            "FW": 89,
+            "HIT": 61,
+            "BLK": 40,
+            "W": 3,
+            "GA*": 21,
+            "GAA": 4.64,
+            "SV": 125,
+            "SHO": 0
+          },
+          "cats": 11
+        },
+        {
+          "name": "Zuzino MotherScooters",
+          "stats": {
+            "G": 8,
+            "A": 15,
+            "P": 23,
+            "+/-": -5,
+            "PIM": 30,
+            "PPP": 6,
+            "SOG": 95,
+            "FW": 107,
+            "HIT": 77,
+            "BLK": 34,
+            "W": 1,
+            "GA*": 2,
+            "GAA": 1.91,
+            "SV": 16,
+            "SHO": 0
+          },
+          "cats": 3
+        },
+        {
+          "name": "Moscow Herding Beasts",
+          "stats": {
+            "G": 16,
+            "A": 27,
+            "P": 43,
+            "+/-": 4,
+            "PIM": 43,
+            "PPP": 14,
+            "SOG": 90,
+            "FW": 70,
+            "HIT": 62,
+            "BLK": 60,
+            "W": 1,
+            "GA*": 17,
+            "GAA": 2.82,
+            "SV": 167,
+            "SHO": 0
+          },
+          "cats": 8
+        },
+        {
+          "name": "Koptevo Demons",
+          "stats": {
+            "G": 12,
+            "A": 17,
+            "P": 29,
+            "+/-": -2,
+            "PIM": 34,
+            "PPP": 9,
+            "SOG": 105,
+            "FW": 125,
+            "HIT": 87,
+            "BLK": 59,
+            "W": 3,
+            "GA*": 19,
+            "GAA": 2.68,
+            "SV": 166,
+            "SHO": 0
+          },
+          "cats": 5
+        },
+        {
+          "name": "Chertanovo Buyers Club",
+          "stats": {
+            "G": 16,
+            "A": 13,
+            "P": 29,
+            "+/-": -3,
+            "PIM": 39,
+            "PPP": 8,
+            "SOG": 116,
+            "FW": 122,
+            "HIT": 76,
+            "BLK": 46,
+            "W": 1,
+            "GA*": 18,
+            "GAA": 4.52,
+            "SV": 93,
+            "SHO": 0
+          },
+          "cats": 3
+        },
+        {
+          "name": "Pavlik Peacocks",
+          "stats": {
+            "G": 11,
+            "A": 30,
+            "P": 41,
+            "+/-": 9,
+            "PIM": 20,
+            "PPP": 9,
+            "SOG": 132,
+            "FW": 178,
+            "HIT": 76,
+            "BLK": 45,
+            "W": 1,
+            "GA*": 13,
+            "GAA": 2.56,
+            "SV": 116,
+            "SHO": 1
+          },
+          "cats": 9
+        },
+        {
+          "name": "NBG Oldboys",
+          "stats": {
+            "G": 11,
+            "A": 24,
+            "P": 35,
+            "+/-": 9,
+            "PIM": 21,
+            "PPP": 9,
+            "SOG": 88,
+            "FW": 67,
+            "HIT": 47,
+            "BLK": 36,
+            "W": 5,
+            "GA*": 9,
+            "GAA": 1.8,
+            "SV": 139,
+            "SHO": 0
+          },
+          "cats": 8
+        },
+        {
+          "name": "Mushroom Flashbacks",
+          "stats": {
+            "G": 11,
+            "A": 17,
+            "P": 28,
+            "+/-": 11,
+            "PIM": 22,
+            "PPP": 7,
+            "SOG": 101,
+            "FW": 51,
+            "HIT": 67,
+            "BLK": 33,
+            "W": 1,
+            "GA*": 13,
+            "GAA": 4.34,
+            "SV": 86,
+            "SHO": 1
+          },
+          "cats": 5
+        },
+        {
+          "name": "Inglourious Basterds",
+          "stats": {
+            "G": 9,
+            "A": 27,
+            "P": 36,
+            "+/-": -5,
+            "PIM": 49,
+            "PPP": 15,
+            "SOG": 94,
+            "FW": 179,
+            "HIT": 50,
+            "BLK": 53,
+            "W": 2,
+            "GA*": 24,
+            "GAA": 4.03,
+            "SV": 118,
+            "SHO": 0
+          },
+          "cats": 7
+        },
+        {
+          "name": "Kazan Costoloms",
+          "stats": {
+            "G": 5,
+            "A": 19,
+            "P": 24,
+            "+/-": 2,
+            "PIM": 29,
+            "PPP": 6,
+            "SOG": 86,
+            "FW": 185,
+            "HIT": 104,
+            "BLK": 68,
+            "W": 2,
+            "GA*": 7,
+            "GAA": 1.8,
+            "SV": 101,
+            "SHO": 1
+          },
+          "cats": 6
+        },
+        {
+          "name": "Koloshino Bacons",
+          "stats": {
+            "G": 18,
+            "A": 22,
+            "P": 40,
+            "+/-": -9,
+            "PIM": 24,
+            "PPP": 13,
+            "SOG": 129,
+            "FW": 77,
+            "HIT": 41,
+            "BLK": 55,
+            "W": 3,
+            "GA*": 7,
+            "GAA": 1.74,
+            "SV": 82,
+            "SHO": 1
+          },
+          "cats": 3
+        },
+        {
+          "name": "Red-Blue Mighty Ducks",
+          "stats": {
+            "G": 13,
+            "A": 27,
+            "P": 40,
+            "+/-": -3,
+            "PIM": 44,
+            "PPP": 17,
+            "SOG": 118,
+            "FW": 149,
+            "HIT": 95,
+            "BLK": 60,
+            "W": 4,
+            "GA*": 22,
+            "GAA": 2.77,
+            "SV": 176,
+            "SHO": 1
+          },
+          "cats": 9
+        }
+      ],
+      "pairs": [
+        [
+          "Moscow Salps",
+          "Moscow Evil Shamans"
+        ],
+        [
+          "Frankfurt Steelers",
+          "Zuzino MotherScooters"
+        ],
+        [
+          "Moscow Herding Beasts",
+          "Koptevo Demons"
+        ],
+        [
+          "Chertanovo Buyers Club",
+          "Pavlik Peacocks"
+        ],
+        [
+          "NBG Oldboys",
+          "Mushroom Flashbacks"
+        ],
+        [
+          "Inglourious Basterds",
+          "Kazan Costoloms"
+        ],
+        [
+          "Koloshino Bacons",
+          "Red-Blue Mighty Ducks"
+        ]
+      ]
+    },
+    "2": {
+      "week": 2,
+      "teams": [
+        {
+          "name": "Moscow Salps",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        },
+        {
+          "name": "Koptevo Demons",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        },
+        {
+          "name": "Frankfurt Steelers",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        },
+        {
+          "name": "NBG Oldboys",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        },
+        {
+          "name": "Moscow Herding Beasts",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        },
+        {
+          "name": "Zuzino MotherScooters",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        },
+        {
+          "name": "Chertanovo Buyers Club",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        },
+        {
+          "name": "Inglourious Basterds",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        },
+        {
+          "name": "Koloshino Bacons",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        },
+        {
+          "name": "Mushroom Flashbacks",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        },
+        {
+          "name": "Moscow Evil Shamans",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        },
+        {
+          "name": "Kazan Costoloms",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        },
+        {
+          "name": "Red-Blue Mighty Ducks",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        },
+        {
+          "name": "Pavlik Peacocks",
+          "stats": {
+            "G": null,
+            "A": null,
+            "P": null,
+            "+/-": null,
+            "PIM": null,
+            "PPP": null,
+            "SOG": null,
+            "FW": null,
+            "HIT": null,
+            "BLK": null,
+            "W": null,
+            "GA*": null,
+            "GAA": null,
+            "SV": null,
+            "SHO": 0
+          },
+          "cats": null
+        }
+      ],
+      "pairs": [
+        [
+          "Moscow Salps",
+          "Koptevo Demons"
+        ],
+        [
+          "Frankfurt Steelers",
+          "NBG Oldboys"
+        ],
+        [
+          "Moscow Herding Beasts",
+          "Zuzino MotherScooters"
+        ],
+        [
+          "Chertanovo Buyers Club",
+          "Inglourious Basterds"
+        ],
+        [
+          "Koloshino Bacons",
+          "Mushroom Flashbacks"
+        ],
+        [
+          "Moscow Evil Shamans",
+          "Kazan Costoloms"
+        ],
+        [
+          "Red-Blue Mighty Ducks",
+          "Pavlik Peacocks"
+        ]
+      ]
+    }
+  }
+}

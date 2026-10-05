@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nelson Mandela Cup — категорийная таблица</title>
+<style>
+  :root { --ink:#1c2421; --muted:#5e6b66; --line:#d7e0db; --bg:#f4f6f4; --green:#1f7a45; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:"Segoe UI",system-ui,sans-serif; color:var(--ink); background:var(--bg); }
+  header { background:#16352a; color:#f3f7f4; padding:22px 28px 18px; }
+  header h1 { margin:0 0 4px; font-size:22px; font-weight:650; }
+  header p { margin:0; color:#c5d5cc; font-size:13px; }
+  main { padding:18px 22px 40px; max-width:1280px; margin:0 auto; }
+  .bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:4px 0 14px; }
+  button, select { font:inherit; font-size:14px; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:8px; padding:7px 12px; cursor:pointer; }
+  button.active { background:#16352a; color:#fff; border-color:#16352a; }
+  .note, .tag { color:var(--muted); font-size:13px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:12px; overflow:auto; margin-bottom:18px; }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; font-variant-numeric:tabular-nums; }
+  th, td { padding:7px 8px; text-align:right; white-space:nowrap; border-bottom:1px solid #eef2ef; }
+  th { background:#f7faf8; font-weight:650; cursor:pointer; position:sticky; top:0; }
+  th:first-child, td:first-child { text-align:left; position:sticky; left:0; background:#fff; }
+  th:first-child { background:#f7faf8; }
+  h2 { font-size:16px; margin:8px 0 10px; }
+  .statrow { display:grid; grid-template-columns:92px 1fr 70px 1fr 92px; align-items:center; gap:8px; padding:6px 4px; border-bottom:1px solid #eef2ef; }
+  .statrow .name { text-align:center; font-weight:650; }
+  .barwrap { height:16px; background:#eef3f0; border-radius:4px; overflow:hidden; }
+  .barwrap.right { display:flex; justify-content:flex-end; }
+  .fill { height:100%; background:#8fbfa4; }
+  .fill.win { background:#1f7a45; }
+  .val { font-variant-numeric:tabular-nums; font-weight:650; }
+  .val.win { color:var(--green); }
+  .val.lose { color:#6d7672; font-weight:500; }
+  .summary b { font-size:28px; }
+  footer { color:var(--muted); font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Nelson Mandela Cup — категорийные итоги</h1>
+  <p>Лига Yahoo 2670. Обновлено 2026-10-05 13:36 UTC. Зеленее — лучше среди 14 команд, GAA наоборот.</p>
+</header>
+<main>
+  <div class="bar" id="weeks"></div>
+  <p class="note" id="note"></p>
+  <div class="card"><table id="grid"></table></div>
+  <h2>Сравнение 1 на 1</h2>
+  <div class="bar">
+    <select id="a"></select><span>против</span><select id="b"></select>
+    <button id="opp">Соперник этой недели</button>
+  </div>
+  <div class="card" style="padding:14px 16px 8px;">
+    <div class="summary" id="summary"></div>
+    <div id="compare"></div>
+  </div>
+  <footer>Страница сама Yahoo не дёргает: браузеру это запрещено. Цифры подтягивает скрипт по расписанию или по кнопке Run workflow. CAT — категории против соперника этой недели, не против команды, выбранной снизу.</footer>
+</main>
+<script>
+const CATS = ["G", "A", "P", "+/-", "PIM", "PPP", "SOG", "FW", "HIT", "BLK", "W", "GAA", "SV", "SHO"];
+const LOWER = new Set(["GAA"]);
+const CURRENT = 2;
+const WEEKS = {"1": {"week": 1, "teams": [{"name": "Moscow Salps", "stats": {"G": 13, "A": 19, "P": 32, "+/-": 0, "PIM": 28, "PPP": 12, "SOG": 88, "FW": 128, "HIT": 75, "BLK": 35, "W": 5, "GA*": 10, "GAA": 1.97, "SV": 120, "SHO": 2}, "cats": 5}, {"name": "Moscow Evil Shamans", "stats": {"G": 15, "A": 20, "P": 35, "+/-": -4, "PIM": 31, "PPP": 12, "SOG": 91, "FW": 84, "HIT": 68, "BLK": 44, "W": 5, "GA*": 23, "GAA": 2.84, "SV": 185, "SHO": 0}, "cats": 7}, {"name": "Frankfurt Steelers", "stats": {"G": 7, "A": 20, "P": 27, "+/-": 4, "PIM": 33, "PPP": 10, "SOG": 102, "FW": 89, "HIT": 61, "BLK": 40, "W": 3, "GA*": 21, "GAA": 4.64, "SV": 125, "SHO": 0}, "cats": 11}, {"name": "Zuzino MotherScooters", "stats": {"G": 8, "A": 15, "P": 23, "+/-": -5, "PIM": 30, "PPP": 6, "SOG": 95, "FW": 107, "HIT": 77, "BLK": 34, "W": 1, "GA*": 2, "GAA": 1.91, "SV": 16, "SHO": 0}, "cats": 3}, {"name": "Moscow Herding Beasts", "stats": {"G": 16, "A": 27, "P": 43, "+/-": 4, "PIM": 43, "PPP": 14, "SOG": 90, "FW": 70, "HIT": 62, "BLK": 60, "W": 1, "GA*": 17, "GAA": 2.82, "SV": 167, "SHO": 0}, "cats": 8}, {"name": "Koptevo Demons", "stats": {"G": 12, "A": 17, "P": 29, "+/-": -2, "PIM": 34, "PPP": 9, "SOG": 105, "FW": 125, "HIT": 87, "BLK": 59, "W": 3, "GA*": 19, "GAA": 2.68, "SV": 166, "SHO": 0}, "cats": 5}, {"name": "Chertanovo Buyers Club", "stats": {"G": 16, "A": 13, "P": 29, "+/-": -3, "PIM": 39, "PPP": 8, "SOG": 116, "FW": 122, "HIT": 76, "BLK": 46, "W": 1, "GA*": 18, "GAA": 4.52, "SV": 93, "SHO": 0}, "cats": 3}, {"name": "Pavlik Peacocks", "stats": {"G": 11, "A": 30, "P": 41, "+/-": 9, "PIM": 20, "PPP": 9, "SOG": 132, "FW": 178, "HIT": 76, "BLK": 45, "W": 1, "GA*": 13, "GAA": 2.56, "SV": 116, "SHO": 1}, "cats": 9}, {"name": "NBG Oldboys", "stats": {"G": 11, "A": 24, "P": 35, "+/-": 9, "PIM": 21, "PPP": 9, "SOG": 88, "FW": 67, "HIT": 47, "BLK": 36, "W": 5, "GA*": 9, "GAA": 1.8, "SV": 139, "SHO": 0}, "cats": 8}, {"name": "Mushroom Flashbacks", "stats": {"G": 11, "A": 17, "P": 28, "+/-": 11, "PIM": 22, "PPP": 7, "SOG": 101, "FW": 51, "HIT": 67, "BLK": 33, "W": 1, "GA*": 13, "GAA": 4.34, "SV": 86, "SHO": 1}, "cats": 5}, {"name": "Inglourious Basterds", "stats": {"G": 9, "A": 27, "P": 36, "+/-": -5, "PIM": 49, "PPP": 15, "SOG": 94, "FW": 179, "HIT": 50, "BLK": 53, "W": 2, "GA*": 24, "GAA": 4.03, "SV": 118, "SHO": 0}, "cats": 7}, {"name": "Kazan Costoloms", "stats": {"G": 5, "A": 19, "P": 24, "+/-": 2, "PIM": 29, "PPP": 6, "SOG": 86, "FW": 185, "HIT": 104, "BLK": 68, "W": 2, "GA*": 7, "GAA": 1.8, "SV": 101, "SHO": 1}, "cats": 6}, {"name": "Koloshino Bacons", "stats": {"G": 18, "A": 22, "P": 40, "+/-": -9, "PIM": 24, "PPP": 13, "SOG": 129, "FW": 77, "HIT": 41, "BLK": 55, "W": 3, "GA*": 7, "GAA": 1.74, "SV": 82, "SHO": 1}, "cats": 3}, {"name": "Red-Blue Mighty Ducks", "stats": {"G": 13, "A": 27, "P": 40, "+/-": -3, "PIM": 44, "PPP": 17, "SOG": 118, "FW": 149, "HIT": 95, "BLK": 60, "W": 4, "GA*": 22, "GAA": 2.77, "SV": 176, "SHO": 1}, "cats": 9}], "pairs": [["Moscow Salps", "Moscow Evil Shamans"], ["Frankfurt Steelers", "Zuzino MotherScooters"], ["Moscow Herding Beasts", "Koptevo Demons"], ["Chertanovo Buyers Club", "Pavlik Peacocks"], ["NBG Oldboys", "Mushroom Flashbacks"], ["Inglourious Basterds", "Kazan Costoloms"], ["Koloshino Bacons", "Red-Blue Mighty Ducks"]]}, "2": {"week": 2, "teams": [{"name": "Moscow Salps", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}, {"name": "Koptevo Demons", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}, {"name": "Frankfurt Steelers", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}, {"name": "NBG Oldboys", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}, {"name": "Moscow Herding Beasts", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}, {"name": "Zuzino MotherScooters", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}, {"name": "Chertanovo Buyers Club", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}, {"name": "Inglourious Basterds", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}, {"name": "Koloshino Bacons", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}, {"name": "Mushroom Flashbacks", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}, {"name": "Moscow Evil Shamans", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}, {"name": "Kazan Costoloms", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}, {"name": "Red-Blue Mighty Ducks", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}, {"name": "Pavlik Peacocks", "stats": {"G": null, "A": null, "P": null, "+/-": null, "PIM": null, "PPP": null, "SOG": null, "FW": null, "HIT": null, "BLK": null, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": 0}, "cats": null}], "pairs": [["Moscow Salps", "Koptevo Demons"], ["Frankfurt Steelers", "NBG Oldboys"], ["Moscow Herding Beasts", "Zuzino MotherScooters"], ["Chertanovo Buyers Club", "Inglourious Basterds"], ["Koloshino Bacons", "Mushroom Flashbacks"], ["Moscow Evil Shamans", "Kazan Costoloms"], ["Red-Blue Mighty Ducks", "Pavlik Peacocks"]]}};
+let week = String(CURRENT);
+let sortKey = "name", sortDir = 1;
+function fmt(v) {
+  if (v === null || v === undefined) return "–";
+  if (typeof v === "number" && !Number.isInteger(v)) return v.toFixed(2).replace(".", ",");
+  return String(v);
+}
+function better(cat, a, b) {
+  if (a === null || b === null || a === b) return 0;
+  return (LOWER.has(cat) ? a < b : a > b) ? 1 : -1;
+}
+function shade(cat, value, values) {
+  const nums = values.filter(v => v !== null && v !== undefined);
+  if (value === null || nums.length < 2) return "";
+  const sorted = [...nums].sort((a,b) => a-b);
+  let rank = sorted.indexOf(value) / (sorted.length - 1);
+  if (!LOWER.has(cat)) rank = 1 - rank;
+  const light = Math.round(232 - rank * 150);
+  return `background:rgb(${light},${Math.round(236-rank*40)},${Math.round(226-rank*150)})`;
+}
+function teamByName(name) { return WEEKS[week].teams.find(t => t.name === name); }
+function render() {
+  const data = WEEKS[week];
+  document.getElementById("weeks").innerHTML = Object.keys(WEEKS).sort((a,b)=>a-b).map(w =>
+    `<button data-w="${w}" class="${w===week?"active":""}">Неделя ${w}${w==String(CURRENT)?" · сейчас":""}</button>`).join("");
+  document.querySelectorAll("#weeks button").forEach(b => b.onclick = () => { week = b.dataset.w; render(); renderCompare(); });
+  const empty = data.teams.every(t => t.stats.G === null);
+  document.getElementById("note").textContent = empty
+    ? "Неделя открыта, Yahoo ещё не насчитал статы."
+    : "Итог или текущий срез матчапов. Клик по заголовку сортирует.";
+  const rows = [...data.teams].sort((a,b) => {
+    const av = sortKey === "name" ? a.name : a.stats[sortKey] ?? a.cats;
+    const bv = sortKey === "name" ? b.name : b.stats[sortKey] ?? b.cats;
+    if (av === null) return 1; if (bv === null) return -1;
+    return sortDir * (typeof av === "string" ? av.localeCompare(bv) : av - bv);
+  });
+  const head = `<tr><th data-k="name">Team</th>${CATS.map(c=>`<th data-k="${c}">${c}</th>`).join("")}<th data-k="cats">CAT</th></tr>`;
+  document.getElementById("grid").innerHTML = head + rows.map(r => `<tr><td>${r.name}</td>${
+    CATS.map(c => `<td><span style="${shade(c, r.stats[c], data.teams.map(t => t.stats[c]))}">${fmt(r.stats[c])}</span></td>`).join("")
+  }<td>${r.cats ?? "–"}</td></tr>`).join("");
+  document.querySelectorAll("#grid th").forEach(th => th.onclick = () => {
+    sortDir = sortKey === th.dataset.k ? -sortDir : (th.dataset.k === "name" ? 1 : -1);
+    sortKey = th.dataset.k; render();
+  });
+  const names = data.teams.map(t => t.name).sort();
+  for (const id of ["a","b"]) {
+    const sel = document.getElementById(id);
+    const prev = sel.value;
+    sel.innerHTML = names.map(n => `<option>${n}</option>`).join("");
+    if (names.includes(prev)) sel.value = prev;
+  }
+  if (!document.getElementById("b").value || document.getElementById("a").value === document.getElementById("b").value) {
+    const pair = data.pairs[0] || names.slice(0,2);
+    document.getElementById("a").value = pair[0];
+    document.getElementById("b").value = pair[1] || names[1];
+  }
+}
+function renderCompare() {
+  const A = teamByName(document.getElementById("a").value);
+  const B = teamByName(document.getElementById("b").value);
+  if (!A || !B) return;
+  let aw=0,bw=0,ties=0;
+  document.getElementById("compare").innerHTML = CATS.map(c => {
+    const d = better(c, A.stats[c], B.stats[c]);
+    if (d>0) aw++; else if (d<0) bw++; else if (A.stats[c] !== null) ties++;
+    const max = Math.max(Math.abs(A.stats[c]||0), Math.abs(B.stats[c]||0)) || 1;
+    return `<div class="statrow">
+      <div class="val ${d>0?"win":"lose"}">${fmt(A.stats[c])}</div>
+      <div class="barwrap right"><div class="fill ${d>0?"win":""}" style="width:${Math.abs(A.stats[c]||0)/max*100}%"></div></div>
+      <div class="name">${c}${LOWER.has(c)?" ↓":""}</div>
+      <div class="barwrap"><div class="fill ${d<0?"win":""}" style="width:${Math.abs(B.stats[c]||0)/max*100}%"></div></div>
+      <div class="val ${d<0?"win":"lose"}">${fmt(B.stats[c])}</div>
+    </div>`;
+  }).join("");
+  document.getElementById("summary").innerHTML = A.stats.G === null
+    ? `<span class="tag">Статов за эту неделю ещё нет.</span>`
+    : `<b>${aw}–${bw}${ties?`–${ties}`:""}</b><div class="tag">${A.name} против ${B.name}</div>`;
+}
+document.getElementById("a").onchange = renderCompare;
+document.getElementById("b").onchange = renderCompare;
+document.getElementById("opp").onclick = () => {
+  const name = document.getElementById("a").value;
+  const pair = (WEEKS[week].pairs || []).find(p => p.includes(name));
+  if (pair) document.getElementById("b").value = pair[0] === name ? pair[1] : pair[0];
+  renderCompare();
+};
+render(); renderCompare();
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+name: Refresh Mandela table
+
+on:
+  schedule:
+    # 11:00 UTC = 13:00 CEST, after the previous night's NHL games are on Yahoo.
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Pull Yahoo and rebuild the page
+        run: python scrape.py
+      - name: Commit the new table
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update league table"
+          file_pattern: index.html data.json
