@@ -2,8 +2,7 @@ name: Refresh Mandela table
 
 on:
   schedule:
-    # 11:00 UTC = 13:00 CEST, after the previous night's NHL games are on Yahoo.
-    - cron: "0 11 * * *"
+    - cron: "30 8 * * *"
   workflow_dispatch:
 
 permissions:
