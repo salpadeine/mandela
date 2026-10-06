@@ -252,8 +252,8 @@ function joinRu(items) {{
   return items.slice(0, -1).join(", ") + " и " + items[items.length - 1];
 }}
 function report(data) {{
-  if (data.blurb) return data.blurb.split(/\n+/).filter(Boolean).map(p => `<p>${{p}}</p>`).join("");
-  if (week === "season" && SEASON_BLURB) return SEASON_BLURB.split(/\n+/).filter(Boolean).map(p => `<p>${{p}}</p>`).join("");
+  if (data.blurb) return data.blurb.split(/\\n+/).filter(Boolean).map(p => `<p>${{p}}</p>`).join("");
+  if (week === "season" && SEASON_BLURB) return SEASON_BLURB.split(/\\n+/).filter(Boolean).map(p => `<p>${{p}}</p>`).join("");
   if (data.teams.every(t => t.stats.G === null)) return "<p>За эту неделю Yahoo ещё не насчитал статы.</p>";
   return "<p>Сводка появится после обновления с ключом Groq.</p>";
 }}
