@@ -3,7 +3,7 @@ name: Refresh Mandela table
 on:
   schedule:
     # 08:30 UTC = 11:30 MSK. Moscow does not observe DST, so this stays put when Europe changes clocks.
-    - cron: "30 8 * * *"
+    - cron: "00 8 * * *"
   workflow_dispatch:
 
 permissions:
