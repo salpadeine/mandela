@@ -396,10 +396,18 @@ def gigachat(prompt: str) -> str:
 def write_blurb(title: str, stats: list[dict]) -> str:
     slim = [{"name": t["name"], "stats": {k: v for k, v in t.get("stats", {}).items() if k != "GA*"}} for t in stats]
     prompt = (
-        "Напиши живую сводку фэнтези-хоккея Nelson Mandela Cup по-русски, 3 коротких абзаца. "
-        "Только эти цифры. Не выдумывай игроков, счета матчей и причины. "
-        "GAA чем меньше, тем лучше. Прочерк в вратарской категории значит, что вратарь не играл. "
-        "Отметь лидеров и кому есть что подтянуть. Без заголовка и списков.\n\n"
+        "Ты пишешь сводку для страницы любительской фэнтези-лиги NHL Nelson Mandela Cup. "
+        "На входе не игроки и не матчи НХЛ, а 14 фэнтези-команд и их суммарные категорийные статы за неделю или за сезон. "
+        "Поле name — название команды, его нельзя переводить, склонять и превращать в фамилию хоккеиста. "
+        "Категории: G голы, A передачи, P очки, +/- плюс/минус, PIM удаления, PPP очки большинства, "
+        "SOG броски, FW выигранные вбрасывания, HIT силовые приёмы, BLK блоки бросков, "
+        "W победы вратарей, GAA средние пропущенные за игру, SV сейвы, SHO шатауты. "
+        "GAA чем меньше, тем лучше. Прочерк или null значит, что вратарь ещё не сыграл, а не ноль. "
+        "FW — это вбрасывания, не процент бросков и не точность передач.\n"
+        "Напиши 3 коротких абзаца по-русски, живым языком, без заголовка, списка и эмодзи. "
+        "Можно сравнивать команды между собой только по этим цифрам. "
+        "Нельзя: выдумывать игроков, тренеров, счёт матчей, место в таблице, победителя недели и причины результата. "
+        "Если цифры ещё маленькие, так и скажи, не раздувай их до сезонного итога.\n\n"
         + title + "\n" + json.dumps(slim, ensure_ascii=False)
     )
     return gigachat(prompt)
@@ -420,7 +428,7 @@ def main() -> None:
             weeks[key] = scrape_week(week)
     for key, week_data in weeks.items():
         played = any(t.get("stats", {}).get("G") is not None for t in week_data.get("teams", []))
-        if played and (key == str(week_now) or not week_data.get("blurb")):
+        if played:
             try:
                 week_data["blurb"] = write_blurb(f"Неделя {key}", week_data["teams"])
             except Exception as exc:
@@ -432,11 +440,10 @@ def main() -> None:
         "weeks": weeks,
         "season_blurb": previous.get("season_blurb", ""),
     }
-    if not payload["season_blurb"]:
-        try:
-            payload["season_blurb"] = write_blurb("Сумма сезона", [t for w in weeks.values() for t in w.get("teams", [])])
-        except Exception as exc:
-            print(f"season blurb failed: {exc}")
+    try:
+        payload["season_blurb"] = write_blurb("Сумма сезона", [t for w in weeks.values() for t in w.get("teams", [])]) or payload["season_blurb"]
+    except Exception as exc:
+        print(f"season blurb failed: {exc}")
     (ROOT / "data.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2))
     (ROOT / "index.html").write_text(render(payload))
     print(f"updated week {week_now}, {sum(len(w['teams']) for w in weeks.values())} team-rows")
