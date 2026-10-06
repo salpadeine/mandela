@@ -10,8 +10,10 @@ from __future__ import annotations
 import json
 import os
 import re
+import ssl
 import time
 import urllib.request
+import uuid
 from datetime import datetime, timedelta, timezone
 from html.parser import HTMLParser
 from pathlib import Path
@@ -167,6 +169,9 @@ def render(payload: dict) -> str:
   .val.win {{ color:var(--green); }}
   .val.lose {{ color:#6d7672; font-weight:500; }}
   .summary b {{ font-size:28px; }}
+  .report {{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:0 0 18px; line-height:1.45; }}
+  .report p {{ margin:0 0 8px; }}
+  .report p:last-child {{ margin:0; }}
   footer {{ color:var(--muted); font-size:12px; }}
 </style>
 </head>
@@ -179,6 +184,8 @@ def render(payload: dict) -> str:
   <div class="bar" id="weeks"></div>
   <p class="note" id="note"></p>
   <div class="card"><table id="grid"></table></div>
+  <h2>Сводка</h2>
+  <div class="report" id="report"></div>
   <h2>Сравнение 1 на 1</h2>
   <div class="bar">
     <select id="a"></select><span>против</span><select id="b"></select>
@@ -194,6 +201,7 @@ def render(payload: dict) -> str:
 const CATS = {json.dumps(CATS)};
 const LOWER = new Set(["GAA"]);
 const CURRENT = {current};
+const SEASON_BLURB = {json.dumps(payload.get("season_blurb") or "", ensure_ascii=False)};
 const WEEKS = {weeks_json};
 let week = String(CURRENT);
 let sortKey = "name", sortDir = 1;
@@ -244,6 +252,13 @@ function leads(teams) {{
   }});
   return out;
 }}
+function esc(s) {{ return s.replace(/&/g,"&").replace(/</g,"<"); }}
+function report(data) {{
+  const text = data.blurb || (week === "season" ? SEASON_BLURB : "");
+  if (text) return text.split(/\\n+/).filter(Boolean).map(p => `<p>${{esc(p)}}</p>`).join("");
+  if (data.teams.every(t => t.stats.G === null)) return "<p>За эту неделю Yahoo ещё не насчитал статы.</p>";
+  return "<p>Сводка появится после обновления.</p>";
+}}
 function teamByName(name) {{ return view().teams.find(t => t.name === name); }}
 function view() {{
   if (week !== "season") return WEEKS[week];
@@ -277,6 +292,7 @@ function render() {{
     : empty
     ? "Неделя открыта, Yahoo ещё не насчитал статы."
     : "Итог или текущий срез матчапов. Клик по заголовку сортирует.";
+  document.getElementById("report").innerHTML = report(data);
   const lead = leads(data.teams);
   const rows = [...data.teams].sort((a,b) => {{
     const av = sortKey === "name" ? a.name : sortKey === "leads" ? lead[a.name] : a.stats[sortKey];
@@ -342,6 +358,53 @@ render(); renderCompare();
 """
 
 
+CTX = ssl._create_unverified_context()
+
+
+def gigachat(prompt: str) -> str:
+    key = os.environ.get("GIGACHAT_KEY") or os.environ.get("GIGACHAT")
+    if not key:
+        print("no GigaChat key, skip blurb")
+        return ""
+    auth = urllib.request.Request(
+        "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
+        data=b"scope=GIGACHAT_API_PERS",
+        headers={
+            "Authorization": f"Basic {key}",
+            "RqUID": str(uuid.uuid4()),
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+        },
+    )
+    with urllib.request.urlopen(auth, timeout=40, context=CTX) as resp:
+        token = json.loads(resp.read().decode())["access_token"]
+    body = json.dumps({
+        "model": "GigaChat-2",
+        "messages": [{"role": "user", "content": prompt}],
+        "stream": False,
+    }).encode()
+    req = urllib.request.Request(
+        "https://api.giga.chat/v1/chat/completions",
+        data=body,
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(req, timeout=60, context=CTX) as resp:
+        data = json.loads(resp.read().decode())
+    return data["choices"][0]["message"]["content"].strip()
+
+
+def write_blurb(title: str, stats: list[dict]) -> str:
+    slim = [{"name": t["name"], "stats": {k: v for k, v in t.get("stats", {}).items() if k != "GA*"}} for t in stats]
+    prompt = (
+        "Напиши живую сводку фэнтези-хоккея Nelson Mandela Cup по-русски, 3 коротких абзаца. "
+        "Только эти цифры. Не выдумывай игроков, счета матчей и причины. "
+        "GAA чем меньше, тем лучше. Прочерк в вратарской категории значит, что вратарь не играл. "
+        "Отметь лидеров и кому есть что подтянуть. Без заголовка и списков.\n\n"
+        + title + "\n" + json.dumps(slim, ensure_ascii=False)
+    )
+    return gigachat(prompt)
+
+
 def main() -> None:
     home = fetch(BASE)
     week_now = current_week(home)
@@ -355,12 +418,25 @@ def main() -> None:
         if week in refresh or key not in weeks or len(weeks[key].get("teams", [])) < 14:
             print(f"week {week}")
             weeks[key] = scrape_week(week)
+    for key, week_data in weeks.items():
+        played = any(t.get("stats", {}).get("G") is not None for t in week_data.get("teams", []))
+        if played and (key == str(week_now) or not week_data.get("blurb")):
+            try:
+                week_data["blurb"] = write_blurb(f"Неделя {key}", week_data["teams"])
+            except Exception as exc:
+                print(f"blurb week {key} failed: {exc}")
     payload = {
         "league": LEAGUE,
         "current_week": week_now,
         "updated": datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d %H:%M МСК"),
         "weeks": weeks,
+        "season_blurb": previous.get("season_blurb", ""),
     }
+    if not payload["season_blurb"]:
+        try:
+            payload["season_blurb"] = write_blurb("Сумма сезона", [t for w in weeks.values() for t in w.get("teams", [])])
+        except Exception as exc:
+            print(f"season blurb failed: {exc}")
     (ROOT / "data.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2))
     (ROOT / "index.html").write_text(render(payload))
     print(f"updated week {week_now}, {sum(len(w['teams']) for w in weeks.values())} team-rows")
