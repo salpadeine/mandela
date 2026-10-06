@@ -3,7 +3,7 @@ name: Refresh Mandela table
 on:
   schedule:
     # 08:30 UTC = 11:30 MSK. Moscow does not observe DST, so this stays put when Europe changes clocks.
-    - cron: "00 8 * * *"
+    - cron: "30 8 * * *"
   workflow_dispatch:
 
 permissions:
@@ -18,6 +18,8 @@ jobs:
         with:
           python-version: "3.12"
       - name: Pull Yahoo and rebuild the page
+        env:
+          GIGACHAT_KEY: ${{ secrets.GIGACHAT }}
         run: python scrape.py
       - name: Commit the new table
         uses: stefanzweifel/git-auto-commit-action@v5
