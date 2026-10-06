@@ -75,7 +75,10 @@ function fmt(v) {
   return String(v);
 }
 function better(cat, a, b) {
-  if (a === null || b === null || a === b) return 0;
+  if (a === null && b === null) return 0;
+  if (a === null) return -1;
+  if (b === null) return 1;
+  if (a === b) return 0;
   return (LOWER.has(cat) ? a < b : a > b) ? 1 : -1;
 }
 function shade(cat, value, values) {
@@ -192,7 +195,7 @@ function renderCompare() {
   let aw=0,bw=0,ties=0;
   document.getElementById("compare").innerHTML = CATS.map(c => {
     const d = better(c, A.stats[c], B.stats[c]);
-    if (d>0) aw++; else if (d<0) bw++; else if (A.stats[c] !== null) ties++;
+    if (d>0) aw++; else if (d<0) bw++; else if (A.stats[c] !== null && B.stats[c] !== null) ties++;
     const max = Math.max(Math.abs(A.stats[c]||0), Math.abs(B.stats[c]||0)) || 1;
     return `<div class="statrow">
       <div class="val ${d>0?"win":"lose"}">${fmt(A.stats[c])}</div>
