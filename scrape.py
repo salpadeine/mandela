@@ -167,9 +167,6 @@ def render(payload: dict) -> str:
   .val.win {{ color:var(--green); }}
   .val.lose {{ color:#6d7672; font-weight:500; }}
   .summary b {{ font-size:28px; }}
-  .report {{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:0 0 18px; line-height:1.45; }}
-  .report p {{ margin:0 0 8px; }}
-  .report p:last-child {{ margin:0; }}
   footer {{ color:var(--muted); font-size:12px; }}
 </style>
 </head>
@@ -182,8 +179,6 @@ def render(payload: dict) -> str:
   <div class="bar" id="weeks"></div>
   <p class="note" id="note"></p>
   <div class="card"><table id="grid"></table></div>
-  <h2>Отчёт</h2>
-  <div class="report" id="report"></div>
   <h2>Сравнение 1 на 1</h2>
   <div class="bar">
     <select id="a"></select><span>против</span><select id="b"></select>
@@ -199,7 +194,6 @@ def render(payload: dict) -> str:
 const CATS = {json.dumps(CATS)};
 const LOWER = new Set(["GAA"]);
 const CURRENT = {current};
-const SEASON_BLURB = {json.dumps(payload.get("season_blurb") or "", ensure_ascii=False)};
 const WEEKS = {weeks_json};
 let week = String(CURRENT);
 let sortKey = "name", sortDir = 1;
@@ -250,16 +244,6 @@ function leads(teams) {{
   }});
   return out;
 }}
-function joinRu(items) {{
-  if (items.length <= 1) return items[0] || "";
-  return items.slice(0, -1).join(", ") + " и " + items[items.length - 1];
-}}
-function report(data) {{
-  if (data.blurb) return data.blurb.split(/\\n+/).filter(Boolean).map(p => `<p>${{p}}</p>`).join("");
-  if (week === "season" && SEASON_BLURB) return SEASON_BLURB.split(/\\n+/).filter(Boolean).map(p => `<p>${{p}}</p>`).join("");
-  if (data.teams.every(t => t.stats.G === null)) return "<p>За эту неделю Yahoo ещё не насчитал статы.</p>";
-  return "<p>Сводка появится после обновления с ключом Groq.</p>";
-}}
 function teamByName(name) {{ return view().teams.find(t => t.name === name); }}
 function view() {{
   if (week !== "season") return WEEKS[week];
@@ -293,7 +277,6 @@ function render() {{
     : empty
     ? "Неделя открыта, Yahoo ещё не насчитал статы."
     : "Итог или текущий срез матчапов. Клик по заголовку сортирует.";
-  document.getElementById("report").innerHTML = report(data);
   const lead = leads(data.teams);
   const rows = [...data.teams].sort((a,b) => {{
     const av = sortKey === "name" ? a.name : sortKey === "leads" ? lead[a.name] : a.stats[sortKey];
@@ -359,33 +342,6 @@ render(); renderCompare();
 """
 
 
-def write_blurb(title: str, stats: list[dict]) -> str:
-    key = os.environ.get("GROQ_API_KEY") or os.environ.get("GROQ")
-    if not key:
-        print("no Groq key, skip blurb")
-        return ""
-    prompt = (
-        "Напиши живую сводку недели фэнтези-хоккея Nelson Mandela Cup по-русски, 3 коротких абзаца. "
-        "Опирайся только на эти цифры. Не выдумывай игроков, счета матчей и причины. "
-        "GAA чем меньше, тем лучше. Отметь лидеров категорий и кому есть что подтянуть. "
-        "Без заголовка и без списков.\n\n"
-        + title + "\n" + json.dumps(stats, ensure_ascii=False)
-    )
-    body = json.dumps({
-        "model": "llama-3.3-70b-versatile",
-        "temperature": 0.7,
-        "messages": [{"role": "user", "content": prompt}],
-    }).encode()
-    req = urllib.request.Request(
-        "https://api.groq.com/openai/v1/chat/completions",
-        data=body,
-        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        data = json.loads(resp.read().decode())
-    return data["choices"][0]["message"]["content"].strip()
-
-
 def main() -> None:
     home = fetch(BASE)
     week_now = current_week(home)
@@ -399,28 +355,12 @@ def main() -> None:
         if week in refresh or key not in weeks or len(weeks[key].get("teams", [])) < 14:
             print(f"week {week}")
             weeks[key] = scrape_week(week)
-    for key, week_data in weeks.items():
-        played = any(t.get("stats", {}).get("G") is not None for t in week_data.get("teams", []))
-        if played and (key == str(week_now) or not week_data.get("blurb")):
-            try:
-                week_data["blurb"] = write_blurb(f"Неделя {key}", week_data["teams"])
-            except Exception as exc:
-                print(f"blurb week {key} failed: {exc}")
     payload = {
         "league": LEAGUE,
         "current_week": week_now,
         "updated": datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d %H:%M МСК"),
         "weeks": weeks,
     }
-    try:
-        season_rows = []
-        for week_data in weeks.values():
-            season_rows.extend(week_data.get("teams", []))
-        if season_rows:
-            payload["season_blurb"] = previous.get("season_blurb") or write_blurb("Сумма сезона", season_rows)
-    except Exception as exc:
-        print(f"season blurb failed: {exc}")
-        payload["season_blurb"] = previous.get("season_blurb", "")
     (ROOT / "data.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2))
     (ROOT / "index.html").write_text(render(payload))
     print(f"updated week {week_now}, {sum(len(w['teams']) for w in weeks.values())} team-rows")

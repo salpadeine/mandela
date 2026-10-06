@@ -33,9 +33,6 @@
   .val.win { color:var(--green); }
   .val.lose { color:#6d7672; font-weight:500; }
   .summary b { font-size:28px; }
-  .report { background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:0 0 18px; line-height:1.45; }
-  .report p { margin:0 0 8px; }
-  .report p:last-child { margin:0; }
   footer { color:var(--muted); font-size:12px; }
 </style>
 </head>
@@ -48,8 +45,6 @@
   <div class="bar" id="weeks"></div>
   <p class="note" id="note"></p>
   <div class="card"><table id="grid"></table></div>
-  <h2>Отчёт</h2>
-  <div class="report" id="report"></div>
   <h2>Сравнение 1 на 1</h2>
   <div class="bar">
     <select id="a"></select><span>против</span><select id="b"></select>
@@ -65,7 +60,6 @@
 const CATS = ["G", "A", "P", "+/-", "PIM", "PPP", "SOG", "FW", "HIT", "BLK", "W", "GAA", "SV", "SHO"];
 const LOWER = new Set(["GAA"]);
 const CURRENT = 2;
-const SEASON_BLURB = "";
 const WEEKS = {"1": {"week": 1, "teams": [{"name": "Moscow Salps", "stats": {"G": 13, "A": 19, "P": 32, "+/-": 0, "PIM": 28, "PPP": 12, "SOG": 88, "FW": 128, "HIT": 75, "BLK": 35, "W": 5, "GA*": 10, "GAA": 1.97, "SV": 120, "SHO": 2}, "cats": 5}, {"name": "Moscow Evil Shamans", "stats": {"G": 15, "A": 20, "P": 35, "+/-": -4, "PIM": 31, "PPP": 12, "SOG": 91, "FW": 84, "HIT": 68, "BLK": 44, "W": 5, "GA*": 23, "GAA": 2.84, "SV": 185, "SHO": 0}, "cats": 7}, {"name": "Frankfurt Steelers", "stats": {"G": 7, "A": 20, "P": 27, "+/-": 4, "PIM": 33, "PPP": 10, "SOG": 102, "FW": 89, "HIT": 61, "BLK": 40, "W": 3, "GA*": 21, "GAA": 4.64, "SV": 125, "SHO": 0}, "cats": 11}, {"name": "Zuzino MotherScooters", "stats": {"G": 8, "A": 15, "P": 23, "+/-": -5, "PIM": 30, "PPP": 6, "SOG": 95, "FW": 107, "HIT": 77, "BLK": 34, "W": 1, "GA*": 2, "GAA": 1.91, "SV": 16, "SHO": 0}, "cats": 3}, {"name": "Moscow Herding Beasts", "stats": {"G": 16, "A": 27, "P": 43, "+/-": 4, "PIM": 43, "PPP": 14, "SOG": 90, "FW": 70, "HIT": 62, "BLK": 60, "W": 1, "GA*": 17, "GAA": 2.82, "SV": 167, "SHO": 0}, "cats": 8}, {"name": "Koptevo Demons", "stats": {"G": 12, "A": 17, "P": 29, "+/-": -2, "PIM": 34, "PPP": 9, "SOG": 105, "FW": 125, "HIT": 87, "BLK": 59, "W": 3, "GA*": 19, "GAA": 2.68, "SV": 166, "SHO": 0}, "cats": 5}, {"name": "Chertanovo Buyers Club", "stats": {"G": 16, "A": 13, "P": 29, "+/-": -3, "PIM": 39, "PPP": 8, "SOG": 116, "FW": 122, "HIT": 76, "BLK": 46, "W": 1, "GA*": 18, "GAA": 4.52, "SV": 93, "SHO": 0}, "cats": 3}, {"name": "Pavlik Peacocks", "stats": {"G": 11, "A": 30, "P": 41, "+/-": 9, "PIM": 20, "PPP": 9, "SOG": 132, "FW": 178, "HIT": 76, "BLK": 45, "W": 1, "GA*": 13, "GAA": 2.56, "SV": 116, "SHO": 1}, "cats": 9}, {"name": "NBG Oldboys", "stats": {"G": 11, "A": 24, "P": 35, "+/-": 9, "PIM": 21, "PPP": 9, "SOG": 88, "FW": 67, "HIT": 47, "BLK": 36, "W": 5, "GA*": 9, "GAA": 1.8, "SV": 139, "SHO": 0}, "cats": 8}, {"name": "Mushroom Flashbacks", "stats": {"G": 11, "A": 17, "P": 28, "+/-": 11, "PIM": 22, "PPP": 7, "SOG": 101, "FW": 51, "HIT": 67, "BLK": 33, "W": 1, "GA*": 13, "GAA": 4.34, "SV": 86, "SHO": 1}, "cats": 5}, {"name": "Inglourious Basterds", "stats": {"G": 9, "A": 27, "P": 36, "+/-": -5, "PIM": 49, "PPP": 15, "SOG": 94, "FW": 179, "HIT": 50, "BLK": 53, "W": 2, "GA*": 24, "GAA": 4.03, "SV": 118, "SHO": 0}, "cats": 7}, {"name": "Kazan Costoloms", "stats": {"G": 5, "A": 19, "P": 24, "+/-": 2, "PIM": 29, "PPP": 6, "SOG": 86, "FW": 185, "HIT": 104, "BLK": 68, "W": 2, "GA*": 7, "GAA": 1.8, "SV": 101, "SHO": 1}, "cats": 6}, {"name": "Koloshino Bacons", "stats": {"G": 18, "A": 22, "P": 40, "+/-": -9, "PIM": 24, "PPP": 13, "SOG": 129, "FW": 77, "HIT": 41, "BLK": 55, "W": 3, "GA*": 7, "GAA": 1.74, "SV": 82, "SHO": 1}, "cats": 3}, {"name": "Red-Blue Mighty Ducks", "stats": {"G": 13, "A": 27, "P": 40, "+/-": -3, "PIM": 44, "PPP": 17, "SOG": 118, "FW": 149, "HIT": 95, "BLK": 60, "W": 4, "GA*": 22, "GAA": 2.77, "SV": 176, "SHO": 1}, "cats": 9}], "pairs": [["Moscow Salps", "Moscow Evil Shamans"], ["Frankfurt Steelers", "Zuzino MotherScooters"], ["Moscow Herding Beasts", "Koptevo Demons"], ["Chertanovo Buyers Club", "Pavlik Peacocks"], ["NBG Oldboys", "Mushroom Flashbacks"], ["Inglourious Basterds", "Kazan Costoloms"], ["Koloshino Bacons", "Red-Blue Mighty Ducks"]]}, "2": {"week": 2, "teams": [{"name": "Moscow Salps", "stats": {"G": 3, "A": 2, "P": 5, "+/-": 6, "PIM": 0, "PPP": 0, "SOG": 6, "FW": 5, "HIT": 5, "BLK": 5, "W": 1, "GA*": 4, "GAA": 2.4, "SV": 30, "SHO": 0}, "cats": 5}, {"name": "Koptevo Demons", "stats": {"G": 4, "A": 5, "P": 9, "+/-": 3, "PIM": 6, "PPP": 0, "SOG": 13, "FW": 26, "HIT": 9, "BLK": 5, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": null}, "cats": 7}, {"name": "Frankfurt Steelers", "stats": {"G": 0, "A": 0, "P": 0, "+/-": 0, "PIM": 2, "PPP": 0, "SOG": 9, "FW": 5, "HIT": 3, "BLK": 3, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": null}, "cats": 2}, {"name": "NBG Oldboys", "stats": {"G": 4, "A": 0, "P": 4, "+/-": -1, "PIM": 0, "PPP": 0, "SOG": 24, "FW": 19, "HIT": 7, "BLK": 5, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": null}, "cats": 6}, {"name": "Moscow Herding Beasts", "stats": {"G": 0, "A": 0, "P": 0, "+/-": -4, "PIM": 4, "PPP": 0, "SOG": 9, "FW": 20, "HIT": 9, "BLK": 3, "W": 1, "GA*": 0, "GAA": 0.0, "SV": 13, "SHO": 1}, "cats": 7}, {"name": "Zuzino MotherScooters", "stats": {"G": 0, "A": 3, "P": 3, "+/-": 5, "PIM": 0, "PPP": 0, "SOG": 11, "FW": 19, "HIT": 6, "BLK": 5, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": null}, "cats": 5}, {"name": "Chertanovo Buyers Club", "stats": {"G": 0, "A": 1, "P": 1, "+/-": 4, "PIM": 6, "PPP": 0, "SOG": 9, "FW": 18, "HIT": 6, "BLK": 3, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": null}, "cats": 4}, {"name": "Inglourious Basterds", "stats": {"G": 1, "A": 0, "P": 1, "+/-": -6, "PIM": 0, "PPP": 0, "SOG": 11, "FW": 2, "HIT": 10, "BLK": 5, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": null}, "cats": 4}, {"name": "Koloshino Bacons", "stats": {"G": 0, "A": 1, "P": 1, "+/-": -2, "PIM": 4, "PPP": 0, "SOG": 7, "FW": 5, "HIT": 3, "BLK": 4, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": null}, "cats": 5}, {"name": "Mushroom Flashbacks", "stats": {"G": 1, "A": 0, "P": 1, "+/-": -7, "PIM": 2, "PPP": 0, "SOG": 12, "FW": 1, "HIT": 7, "BLK": 1, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": null}, "cats": 3}, {"name": "Moscow Evil Shamans", "stats": {"G": 2, "A": 2, "P": 4, "+/-": 6, "PIM": 14, "PPP": 0, "SOG": 9, "FW": 5, "HIT": 17, "BLK": 7, "W": 0, "GA*": 5, "GAA": 5.02, "SV": 21, "SHO": 0}, "cats": 8}, {"name": "Kazan Costoloms", "stats": {"G": 1, "A": 0, "P": 1, "+/-": 3, "PIM": 0, "PPP": 0, "SOG": 8, "FW": 15, "HIT": 7, "BLK": 2, "W": 1, "GA*": 4, "GAA": 2.04, "SV": 44, "SHO": 0}, "cats": 4}, {"name": "Red-Blue Mighty Ducks", "stats": {"G": 0, "A": 0, "P": 0, "+/-": -7, "PIM": 0, "PPP": 0, "SOG": 2, "FW": 0, "HIT": 8, "BLK": 4, "W": 1, "GA*": 2, "GAA": 2.0, "SV": 30, "SHO": 0}, "cats": 4}, {"name": "Pavlik Peacocks", "stats": {"G": 0, "A": 1, "P": 1, "+/-": -7, "PIM": 7, "PPP": 0, "SOG": 15, "FW": 37, "HIT": 13, "BLK": 10, "W": null, "GA*": null, "GAA": null, "SV": null, "SHO": null}, "cats": 7}], "pairs": [["Moscow Salps", "Koptevo Demons"], ["Frankfurt Steelers", "NBG Oldboys"], ["Moscow Herding Beasts", "Zuzino MotherScooters"], ["Chertanovo Buyers Club", "Inglourious Basterds"], ["Koloshino Bacons", "Mushroom Flashbacks"], ["Moscow Evil Shamans", "Kazan Costoloms"], ["Red-Blue Mighty Ducks", "Pavlik Peacocks"]]}};
 let week = String(CURRENT);
 let sortKey = "name", sortDir = 1;
@@ -116,16 +110,6 @@ function leads(teams) {
   });
   return out;
 }
-function joinRu(items) {
-  if (items.length <= 1) return items[0] || "";
-  return items.slice(0, -1).join(", ") + " и " + items[items.length - 1];
-}
-function report(data) {
-  if (data.blurb) return data.blurb.split(/\n+/).filter(Boolean).map(p => `<p>${p}</p>`).join("");
-  if (week === "season" && SEASON_BLURB) return SEASON_BLURB.split(/\n+/).filter(Boolean).map(p => `<p>${p}</p>`).join("");
-  if (data.teams.every(t => t.stats.G === null)) return "<p>За эту неделю Yahoo ещё не насчитал статы.</p>";
-  return "<p>Сводка появится после обновления с ключом Groq.</p>";
-}
 function teamByName(name) { return view().teams.find(t => t.name === name); }
 function view() {
   if (week !== "season") return WEEKS[week];
@@ -159,7 +143,6 @@ function render() {
     : empty
     ? "Неделя открыта, Yahoo ещё не насчитал статы."
     : "Итог или текущий срез матчапов. Клик по заголовку сортирует.";
-  document.getElementById("report").innerHTML = report(data);
   const lead = leads(data.teams);
   const rows = [...data.teams].sort((a,b) => {
     const av = sortKey === "name" ? a.name : sortKey === "leads" ? lead[a.name] : a.stats[sortKey];
