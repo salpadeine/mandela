@@ -18,8 +18,6 @@ jobs:
         with:
           python-version: "3.12"
       - name: Pull Yahoo and rebuild the page
-        env:
-          GROQ_API_KEY: ${{ secrets.GROQ }}
         run: python scrape.py
       - name: Commit the new table
         uses: stefanzweifel/git-auto-commit-action@v5
