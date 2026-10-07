@@ -379,7 +379,7 @@ def gigachat(prompt: str) -> str:
     with urllib.request.urlopen(auth, timeout=40, context=CTX) as resp:
         token = json.loads(resp.read().decode())["access_token"]
     body = json.dumps({
-        "model": "GigaChat-3-Ultra",
+        "model": "GigaChat-2",
         "messages": [{"role": "user", "content": prompt}],
         "stream": False,
     }).encode()
@@ -405,9 +405,10 @@ def write_blurb(title: str, stats: list[dict]) -> str:
         "GAA чем меньше, тем лучше. Прочерк или null значит, что вратарь ещё не сыграл, а не ноль. "
         "FW — это вбрасывания, не процент бросков и не точность передач.\n"
         "Напиши 3 коротких абзаца по-русски, живым языком, без заголовка, списка и эмодзи. "
-        "Твоя задача: подсветить лидеров и аутсайдеров среди команд по всем категориям. "
+        "По каждой категории назови лидера и аутсайдера, если отрыв заметен. Середину таблицы не перечисляй. "
+        "Отдельно выдели редкое или странное: шатаут, нули, команда первая в одной категории и последняя в другой, вратарь без сыгранных минут. "
         "Можно сравнивать команды между собой только по этим цифрам. "
-        "Нельзя: выдумывать игроков, тренеров, счёт матчей, место в таблице, победителя недели и причины результата. "
+        "Нельзя: выдумывать игроков, тренеров, счёт матчей, место в общей таблице, победителя недели и причины результата. "
         "Если цифры ещё маленькие, так и скажи, не раздувай их до сезонного итога.\n\n"
         + title + "\n" + json.dumps(slim, ensure_ascii=False)
     )
@@ -415,9 +416,13 @@ def write_blurb(title: str, stats: list[dict]) -> str:
 
 
 def main() -> None:
+    previous = load_previous()
+    today = datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d")
+    if os.environ.get("GITHUB_EVENT_NAME") == "schedule" and str(previous.get("updated", "")).startswith(today):
+        print(f"already updated {previous.get('updated')}, skip late schedule")
+        return
     home = fetch(BASE)
     week_now = current_week(home)
-    previous = load_previous()
     weeks = previous.get("weeks", {})
     # Current week always, previous week in case of stat corrections, missing weeks once.
     wanted = set(range(1, week_now + 1))
@@ -426,10 +431,13 @@ def main() -> None:
         key = str(week)
         if week in refresh or key not in weeks or len(weeks[key].get("teams", [])) < 14:
             print(f"week {week}")
+            old_blurb = weeks.get(key, {}).get("blurb", "")
             weeks[key] = scrape_week(week)
+            if week != week_now and old_blurb:
+                weeks[key]["blurb"] = old_blurb
     for key, week_data in weeks.items():
         played = any(t.get("stats", {}).get("G") is not None for t in week_data.get("teams", []))
-        if played:
+        if played and (key == str(week_now) or not week_data.get("blurb")):
             try:
                 week_data["blurb"] = write_blurb(f"Неделя {key}", week_data["teams"])
             except Exception as exc:
