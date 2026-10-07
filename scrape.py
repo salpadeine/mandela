@@ -379,7 +379,7 @@ def gigachat(prompt: str) -> str:
     with urllib.request.urlopen(auth, timeout=40, context=CTX) as resp:
         token = json.loads(resp.read().decode())["access_token"]
     body = json.dumps({
-        "model": "GigaChat-2",
+        "model": "GigaChat-3-Ultra",
         "messages": [{"role": "user", "content": prompt}],
         "stream": False,
     }).encode()
