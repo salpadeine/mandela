@@ -169,9 +169,6 @@ def render(payload: dict) -> str:
   .val.win {{ color:var(--green); }}
   .val.lose {{ color:#6d7672; font-weight:500; }}
   .summary b {{ font-size:28px; }}
-  .report {{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:0 0 18px; line-height:1.45; }}
-  .report p {{ margin:0 0 8px; }}
-  .report p:last-child {{ margin:0; }}
   footer {{ color:var(--muted); font-size:12px; }}
 </style>
 </head>
@@ -184,8 +181,9 @@ def render(payload: dict) -> str:
   <div class="bar" id="weeks"></div>
   <p class="note" id="note"></p>
   <div class="card"><table id="grid"></table></div>
-  <h2>Сводка</h2>
-  <div class="report" id="report"></div>
+  <h2>Места</h2>
+  <p class="note">1 — лучшая в категории, 14 — худшая. GAA наоборот. При равенстве место одно на двоих. В конце среднее место.</p>
+  <div class="card"><table id="ranks"></table></div>
   <h2>Сравнение 1 на 1</h2>
   <div class="bar">
     <select id="a"></select><span>против</span><select id="b"></select>
@@ -201,7 +199,6 @@ def render(payload: dict) -> str:
 const CATS = {json.dumps(CATS)};
 const LOWER = new Set(["GAA"]);
 const CURRENT = {current};
-const SEASON_BLURB = {json.dumps(payload.get("season_blurb") or "", ensure_ascii=False)};
 const WEEKS = {weeks_json};
 let week = String(CURRENT);
 let sortKey = "name", sortDir = 1;
@@ -252,13 +249,6 @@ function leads(teams) {{
   }});
   return out;
 }}
-function esc(s) {{ return s.replace(/&/g,"&").replace(/</g,"<"); }}
-function report(data) {{
-  const text = data.blurb || (week === "season" ? SEASON_BLURB : "");
-  if (text) return text.split(/\\n+/).filter(Boolean).map(p => `<p>${{esc(p)}}</p>`).join("");
-  if (data.teams.every(t => t.stats.G === null)) return "<p>За эту неделю Yahoo ещё не насчитал статы.</p>";
-  return "<p>Сводка появится после обновления.</p>";
-}}
 function teamByName(name) {{ return view().teams.find(t => t.name === name); }}
 function view() {{
   if (week !== "season") return WEEKS[week];
@@ -292,7 +282,6 @@ function render() {{
     : empty
     ? "Неделя открыта, Yahoo ещё не насчитал статы."
     : "Итог или текущий срез матчапов. Клик по заголовку сортирует.";
-  document.getElementById("report").innerHTML = report(data);
   const lead = leads(data.teams);
   const rows = [...data.teams].sort((a,b) => {{
     const av = sortKey === "name" ? a.name : sortKey === "leads" ? lead[a.name] : a.stats[sortKey];
@@ -308,6 +297,40 @@ function render() {{
     sortDir = sortKey === th.dataset.k ? -sortDir : (th.dataset.k === "name" ? 1 : -1);
     sortKey = th.dataset.k; render();
   }});
+  const places = {{}};
+  data.teams.forEach(t => places[t.name] = {{}});
+  CATS.forEach(c => {{
+    const ranked = [...data.teams].sort((a,b) => {{
+      const av = a.stats[c], bv = b.stats[c];
+      if (av === null || av === undefined) return 1;
+      if (bv === null || bv === undefined) return -1;
+      return LOWER.has(c) ? av - bv : bv - av;
+    }});
+    let place = 0, last = null;
+    ranked.forEach((t, i) => {{
+      const v = t.stats[c];
+      if (v === null || v === undefined) {{ places[t.name][c] = null; return; }}
+      if (v !== last) place = i + 1;
+      last = v;
+      places[t.name][c] = place;
+    }});
+  }});
+  data.teams.forEach(t => {{
+    const nums = CATS.map(c => places[t.name][c]).filter(v => v !== null);
+    places[t.name].avg = nums.length ? Math.round(nums.reduce((s,v) => s+v, 0) / nums.length * 10) / 10 : null;
+  }});
+  function placeShade(place) {{
+    if (place === null || place === undefined) return "";
+    const rank = 1 - (place - 1) / 13;
+    const r = Math.round(244 - rank * 212);
+    const g = Math.round(250 - rank * 126);
+    const b = Math.round(244 - rank * 176);
+    const color = rank > 0.55 ? "#f4faf6" : "#1c2421";
+    return `background:rgb(${{r}},${{g}},${{b}});color:${{color}}`;
+  }}
+  const rankRows = [...data.teams].sort((a,b) => (places[a.name].avg ?? 99) - (places[b.name].avg ?? 99));
+  document.getElementById("ranks").innerHTML = `<tr><th>Team</th>${{CATS.map(c => `<th>${{c}}</th>`).join("")}}<th>Среднее</th></tr>` +
+    rankRows.map(t => `<tr><td>${{t.name}}</td>${{CATS.map(c => `<td style="${{placeShade(places[t.name][c])}}">${{places[t.name][c] ?? "–"}}</td>`).join("")}}<td style="${{placeShade(places[t.name].avg)}}">${{places[t.name].avg === null ? "–" : places[t.name].avg.toFixed(1).replace(".", ",")}}</td></tr>`).join("");
   const names = data.teams.map(t => t.name).sort();
   for (const id of ["a","b"]) {{
     const sel = document.getElementById(id);
@@ -358,63 +381,6 @@ render(); renderCompare();
 """
 
 
-CTX = ssl._create_unverified_context()
-
-
-def gigachat(prompt: str) -> str:
-    key = os.environ.get("GIGACHAT_KEY") or os.environ.get("GIGACHAT")
-    if not key:
-        print("no GigaChat key, skip blurb")
-        return ""
-    auth = urllib.request.Request(
-        "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
-        data=b"scope=GIGACHAT_API_PERS",
-        headers={
-            "Authorization": f"Basic {key}",
-            "RqUID": str(uuid.uuid4()),
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json",
-        },
-    )
-    with urllib.request.urlopen(auth, timeout=40, context=CTX) as resp:
-        token = json.loads(resp.read().decode())["access_token"]
-    body = json.dumps({
-        "model": "GigaChat-3-Ultra",
-        "messages": [{"role": "user", "content": prompt}],
-        "stream": False,
-    }).encode()
-    req = urllib.request.Request(
-        "https://api.giga.chat/v1/chat/completions",
-        data=body,
-        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=60, context=CTX) as resp:
-        data = json.loads(resp.read().decode())
-    return data["choices"][0]["message"]["content"].strip()
-
-
-def write_blurb(title: str, stats: list[dict]) -> str:
-    slim = [{"name": t["name"], "stats": {k: v for k, v in t.get("stats", {}).items() if k != "GA*"}} for t in stats]
-    prompt = (
-        "Ты пишешь сводку для страницы любительской фэнтези-лиги NHL Nelson Mandela Cup. "
-        "На входе не игроки и не матчи НХЛ, а 14 фэнтези-команд и их суммарные категорийные статы за неделю или за сезон. "
-        "Поле name — название команды, его нельзя переводить, склонять и превращать в фамилию хоккеиста. "
-        "Категории: G голы, A передачи, P очки, +/- плюс/минус, PIM удаления, PPP очки большинства, "
-        "SOG броски, FW выигранные вбрасывания, HIT силовые приёмы, BLK блоки бросков, "
-        "W победы вратарей, GAA средние пропущенные за игру, SV сейвы, SHO шатауты. "
-        "GAA чем меньше, тем лучше. Прочерк или null значит, что вратарь ещё не сыграл, а не ноль. "
-        "FW — это вбрасывания, не процент бросков и не точность передач.\n"
-        "Напиши 3 коротких абзаца по-русски, живым языком, без заголовка, списка и эмодзи. "
-        "По каждой категории назови лидера и аутсайдера, если отрыв заметен. Середину таблицы не перечисляй. "
-        "Отдельно выдели редкое или странное: шатаут, нули, команда первая в одной категории и последняя в другой. "
-        "Можно сравнивать команды между собой только по этим цифрам. "
-        "Нельзя: выдумывать игроков, тренеров, счёт матчей, место в общей таблице, победителя недели и причины результата. "
-        "Если цифры ещё маленькие, так и скажи, не раздувай их до сезонного итога.\n\n"
-        + title + "\n" + json.dumps(slim, ensure_ascii=False)
-    )
-    return gigachat(prompt)
-
-
 def main() -> None:
     previous = load_previous()
     today = datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d")
@@ -424,35 +390,19 @@ def main() -> None:
     home = fetch(BASE)
     week_now = current_week(home)
     weeks = previous.get("weeks", {})
-    # Current week always, previous week in case of stat corrections, missing weeks once.
     wanted = set(range(1, week_now + 1))
     refresh = {week_now, max(1, week_now - 1)}
     for week in sorted(wanted):
         key = str(week)
         if week in refresh or key not in weeks or len(weeks[key].get("teams", [])) < 14:
             print(f"week {week}")
-            old_blurb = weeks.get(key, {}).get("blurb", "")
             weeks[key] = scrape_week(week)
-            if week != week_now and old_blurb:
-                weeks[key]["blurb"] = old_blurb
-    for key, week_data in weeks.items():
-        played = any(t.get("stats", {}).get("G") is not None for t in week_data.get("teams", []))
-        if played and (key == str(week_now) or not week_data.get("blurb")):
-            try:
-                week_data["blurb"] = write_blurb(f"Неделя {key}", week_data["teams"])
-            except Exception as exc:
-                print(f"blurb week {key} failed: {exc}")
     payload = {
         "league": LEAGUE,
         "current_week": week_now,
         "updated": datetime.now(timezone(timedelta(hours=3))).strftime("%Y-%m-%d %H:%M МСК"),
         "weeks": weeks,
-        "season_blurb": previous.get("season_blurb", ""),
     }
-    try:
-        payload["season_blurb"] = write_blurb("Сумма сезона", [t for w in weeks.values() for t in w.get("teams", [])]) or payload["season_blurb"]
-    except Exception as exc:
-        print(f"season blurb failed: {exc}")
     (ROOT / "data.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2))
     (ROOT / "index.html").write_text(render(payload))
     print(f"updated week {week_now}, {sum(len(w['teams']) for w in weeks.values())} team-rows")
